@@ -15,8 +15,9 @@ from pydub import AudioSegment  # For webm to wav conversion
 # ---------------- Configuration ----------------
 SAMPLE_RATE = 16000
 MAX_TIME = 256
-MODEL_PATH = "C:/Users/karth/EMOTION-RECOGNIZER/emotiva/backend/models/cnn_transformer_ser.pt"
-LABEL_ENCODER_PATH = "C:/Users/karth/EMOTION-RECOGNIZER/emotiva/backend/models/label_encoder.npy"
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "cnn_transformer_ser.pt")
+LABEL_ENCODER_PATH = os.path.join(os.path.dirname(__file__), "models", "label_encoder.npy")
+
 
 # ---------------- FastAPI Setup ----------------
 app = FastAPI()
