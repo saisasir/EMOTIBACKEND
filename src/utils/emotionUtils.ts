@@ -78,7 +78,7 @@ export const getEmotionResponse = (emotion: string): EmotionResponse => {
   };
 };
 
-export const API_URL = "http://localhost:8000";
+export const API_URL = "https://emotiva.onrender.com";
 
 // Original backend call
 export const predictEmotion = async (audio: Blob): Promise<EmotionResult> => {
