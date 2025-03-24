@@ -10,7 +10,7 @@ import tempfile
 import uvicorn
 from pydantic import BaseModel
 from sklearn.preprocessing import LabelEncoder
-from pydub import AudioSegment  # For webm to wav conversion
+import traceback
 
 # ---------------- Configuration ----------------
 SAMPLE_RATE = 16000
@@ -18,13 +18,12 @@ MAX_TIME = 256
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "models", "cnn_transformer_ser.pt")
 LABEL_ENCODER_PATH = os.path.join(os.path.dirname(__file__), "models", "label_encoder.npy")
 
-
 # ---------------- FastAPI Setup ----------------
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8082"],
+    allow_origins=["http://localhost:8082"],  # Change this if frontend is on Netlify/Vercel later
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -147,22 +146,12 @@ def read_root():
 @app.post("/predict-emotion")
 async def predict_emotion(audio_file: UploadFile = File(...)):
     try:
-        temp_audio_path = "temp_audio.webm"
+        temp_audio_path = "temp_audio.wav"
         with open(temp_audio_path, "wb") as buffer:
             buffer.write(await audio_file.read())
 
-        AudioSegment.converter = "ffmpeg"  # Only needed if ffmpeg isn't already in PATH
-
-        try:
-            sound = AudioSegment.from_file(temp_audio_path)
-            temp_wav_path = "converted.wav"
-            sound.export(temp_wav_path, format="wav")
-            y, sr = librosa.load(temp_wav_path, sr=SAMPLE_RATE)
-            os.remove(temp_wav_path)
-        except Exception as e:
-            print("Audio conversion failed:", e)
-            return {"error": "Failed to convert audio file"}
-
+        # Directly load .wav file (no ffmpeg or pydub)
+        y, sr = librosa.load(temp_audio_path, sr=SAMPLE_RATE)
         os.remove(temp_audio_path)
 
         features = extract_features(y, sr)
@@ -184,8 +173,11 @@ async def predict_emotion(audio_file: UploadFile = File(...)):
             text_response=response_text,
             audio_base64=audio_base64
         )
+
     except Exception as e:
-        return {"error": str(e)}
+        print("🔴 Exception:", str(e))
+        traceback.print_exc()
+        return {"error": "Failed to process audio", "details": str(e)}
 
 # ---------------- Run ----------------
 if __name__ == "__main__":
